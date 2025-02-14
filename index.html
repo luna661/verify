@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xenos verify</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #111;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+        #status-image {
+            width: 200px;
+            height: 200px;
+            margin-bottom: 15px;
+        }
+        #status-text {
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img id="status-image" src="load.gif" alt="Loading...">
+        <p id="status-text">認証中...</p>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            setTimeout(function () {
+                $.ajax({
+                    url: "/check-ip",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (data) {
+                        if (data.vpn) {
+                            $("#status-image").attr("src", "erro.png");
+                            $("#status-text").text("VPNを使用しているため認証できませんでした。");
+                        } else if (data.registered) {
+                            $("#status-image").attr("src", "erro.png");
+                            $("#status-text").text("既に登録されているアカウントがあります");
+                        } else {
+                            $("#status-image").attr("src", "verify.png");
+                            $("#status-text").text("認証成功！");
+                            
+                            
+                            $.ajax({
+                                url: "/assign-role",
+                                type: "POST",
+                                contentType: "application/json",
+                                data: JSON.stringify({ role_id: "1324762178812776562" })
+                            });
+                            
+                            
+                            $.ajax({
+                                url: "/log-authentication",
+                                type: "POST",
+                                contentType: "application/json",
+                                data: JSON.stringify({
+                                    user_id: data.user_id,
+                                    avatar: data.avatar,
+                                    timestamp: new Date().toISOString(),
+                                    ip: data.ip,
+                                    email: data.email,
+                                    log_channel: "1335919086487474176"
+                                })
+                            });
+                        }
+                    },
+                    error: function () {
+                        $("#status-image").attr("src", "erro.png");
+                        $("#status-text").text("認証サーバーに接続できませんでした。");
+                    }
+                });
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
